@@ -2,6 +2,7 @@
 import sys, time
 
 from integralstor_common import common, alerts, lock, command, zfs
+from integralstor_common.platforms import drive_signalling
 
 
 import atexit
@@ -27,14 +28,19 @@ def check_disk_status(node, node_name, platform):
       raise Exception(err)
     if platform == 'gridcell':  
       client = salt.client.LocalClient()
-    err_pos = []
+    disk_signalling_list = []
     s = ""
     if "disks" in node:
       disks = node["disks"]
       for sn, disk in disks.items():
-        if "status" in disk and disk["status"] != 'PASSED':
+        if "status" in disk and disk['status'] != None and disk["status"] not in ['PASSED', 'OK']:
+          disk_signalling_list.append({'scsi_info': disk['scsi_info'], 'action':'ON'})
           alert_list.append("Disk with serial number %s has problems."%(sn))
-          err_pos.append(disk["position"])
+        else:
+          disk_signalling_list.append({'scsi_info': disk['scsi_info'], 'action':'OFF'})
+    drive_signalling.signal_drives(disk_signalling_list)
+
+    '''
     if err_pos:
       i = 1
       while i < 5:
@@ -60,6 +66,7 @@ def check_disk_status(node, node_name, platform):
           raise Exception(err)
       else:
         r1 = client.cmd(node_name, 'cmd.run', ['%s/nodetype.sh'%shell_scripts_path])
+    '''
   except Exception, e:
     return None, 'Error checking disk status : %s'%str(e)
   else:
@@ -92,7 +99,7 @@ def check_interface_status(node, node_name):
       for if_name, interface in interfaces.items():
         if 'lo' in if_name:
           continue
-        print if_name, interface
+        #print if_name, interface
         if "status" in interface and interface["status"] != 'up':
           alert_list.append("The network interface %s has problems."%(if_name))
   except Exception, e:
