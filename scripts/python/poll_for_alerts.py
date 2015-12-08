@@ -2,7 +2,7 @@
 import sys, time
 
 from integralstor_common import common, alerts, lock, command, zfs
-from integralstor_common.platforms import drive_signalling
+#from integralstor_common.platforms import drive_signalling
 
 
 import atexit
@@ -38,7 +38,7 @@ def check_disk_status(node, node_name, platform):
           alert_list.append("Disk with serial number %s has problems."%(sn))
         else:
           disk_signalling_list.append({'scsi_info': disk['scsi_info'], 'action':'OFF'})
-    drive_signalling.signal_drives(disk_signalling_list)
+    #drive_signalling.signal_drives(disk_signalling_list)
 
     '''
     if err_pos:
