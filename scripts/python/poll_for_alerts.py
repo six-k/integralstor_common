@@ -26,8 +26,6 @@ def check_disk_status(node, node_name, platform):
     shell_scripts_path, err = common.get_shell_scripts_path()
     if err:
       raise Exception(err)
-    if platform == 'gridcell':  
-      client = salt.client.LocalClient()
     disk_signalling_list = []
     s = ""
     if "disks" in node:
@@ -35,7 +33,10 @@ def check_disk_status(node, node_name, platform):
       for sn, disk in disks.items():
         if "status" in disk and disk['status'] != None and disk["status"] not in ['PASSED', 'OK']:
           disk_signalling_list.append({'scsi_info': disk['scsi_info'], 'action':'ON'})
-          alert_list.append("Disk with serial number %s has problems."%(sn))
+          if platform == 'unicell':
+            alert_list.append("Disk with serial number %s has problems."%(sn))
+          else:
+            alert_list.append("GRIDCell : %s. Disk with serial number %s has problems."%(node_name, sn))
         else:
           disk_signalling_list.append({'scsi_info': disk['scsi_info'], 'action':'OFF'})
     #drive_signalling.signal_drives(disk_signalling_list)
@@ -81,7 +82,10 @@ def check_ipmi_status(node, node_name):
       status_list = node["ipmi_status"]
       for status_item in status_list:
         if status_item["status"] != 'ok':
-          m = "The %s of the %s is reporting errors" %(status_item["parameter_name"], status_item["component_name"])
+          if platform == 'unicell':
+            m = "The %s of the %s is reporting errors" %(status_item["parameter_name"], status_item["component_name"])
+          else:
+            m = "GRIDCell : %s. The %s of the %s is reporting errors" %(node_name, status_item["parameter_name"], status_item["component_name"])
           if "reading" in status_item:
             m += " with a reading of %s."%status_item["reading"]
           alert_list.append(m)
@@ -101,7 +105,10 @@ def check_interface_status(node, node_name):
           continue
         #print if_name, interface
         if "status" in interface and interface["status"] != 'up':
-          alert_list.append("The network interface %s has problems."%(if_name))
+          if platform == 'unicell':
+            alert_list.append("The network interface %s has problems."%(if_name))
+          else:
+            alert_list.append("GRIDCell : %s. The network interface %s has problems."%(node_name, if_name))
   except Exception, e:
     return None, 'Error checking interface status : %s'%str(e)
   else:
@@ -122,7 +129,10 @@ def check_pool_status(node, node_name):
           for component in component_status_list:
             if 'status' in component and 'state' in component['status'] and component['status']['state'] != 'ONLINE':
               if not msg:
-                msg = "The ZFS pool '%s' has the following issue(s) : "%pool_name
+                if platform == 'unicell':
+                  msg = "The ZFS pool '%s' has the following issue(s) : "%pool_name
+                else:
+                  msg = "GRIDCell : %s. The ZFS pool '%s' has the following issue(s) : "%(node_name, pool_name)
               msg += "The component %s of type '%s' has a state of '%s'. "%(component['name'], component['type'], component['status']['state'])
           if msg:
             alert_list.append(msg)
@@ -138,9 +148,15 @@ def check_load_average(node, node_name):
   try:
     if "load_avg" in node:
       if node["load_avg"]["5_min"] > node["load_avg"]["cpu_cores"]:
-        alert_list.append("The 5 minute load average has been high with a value of %.2f."%(node["load_avg"]["5_min"]))
+        if platform == 'unicell':
+          alert_list.append("The 5 minute load average has been high with a value of %.2f."%(node["load_avg"]["5_min"]))
+        else:
+          alert_list.append("GRIDCell : %s. The 5 minute load average has been high with a value of %.2f."%(node_name, node["load_avg"]["5_min"]))
       if node["load_avg"]["15_min"] > node["load_avg"]["cpu_cores"]:
-        alert_list.append("The 15 minute load average on has been high with a value of %.2f."%(node["load_avg"]["15_min"]))
+        if platform == 'unicell':
+          alert_list.append("The 15 minute load average on has been high with a value of %.2f."%(node["load_avg"]["15_min"]))
+        else:
+          alert_list.append("GRIDCell : %s. The 15 minute load average on has been high with a value of %.2f."%(node_name, node["load_avg"]["15_min"]))
   except Exception, e:
     return None, 'Error checking pool status : %s'%str(e)
   else:
