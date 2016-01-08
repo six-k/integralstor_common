@@ -18,7 +18,7 @@ def gen_manifest(path):
         raise Exception('No manifest info obtained')
     else:
       fullpath = os.path.normpath("%s/master.manifest"%path)
-      fulltmppath = os.path.normpath("%s/master.manifest.tmp"%path)
+      fulltmppath = "/tmp/master.manifest.tmp"
       fullcopypath = os.path.normpath("%s/master.manifest.%s"%(path, datetime.datetime.now().strftime("%B_%d_%Y_%H_%M_%S")))
       #Generate into a tmp file
       with open(fulltmppath, 'w') as fd:

@@ -20,7 +20,7 @@ def gen_status(path):
       else:
         raise Exception('No status info obtained')
     fullpath = os.path.normpath("%s/master.status"%path)
-    fulltmppath = os.path.normpath("%s/master.status.tmp"%path)
+    fulltmppath = "/tmp/master.status.tmp"
     #Generate into a tmp file
     with open(fulltmppath, 'w') as fd:
       json.dump(ret, fd, indent=2)
