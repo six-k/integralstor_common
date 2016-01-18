@@ -74,14 +74,14 @@ def check_disk_status(node, node_name, platform):
     return alert_list, None
 
 
-def check_ipmi_status(node, node_name):
+def check_ipmi_status(node, node_name, platform):
 
   alert_list = []
   try:
     if "ipmi_status" in node:
       status_list = node["ipmi_status"]
       for status_item in status_list:
-        if status_item["status"] != 'ok':
+        if status_item["status"] not in ['ok', 'nr']:
           if platform == 'unicell':
             m = "The %s of the %s is reporting errors" %(status_item["parameter_name"], status_item["component_name"])
           else:
@@ -94,7 +94,7 @@ def check_ipmi_status(node, node_name):
   else:
     return alert_list, None
 
-def check_interface_status(node, node_name):
+def check_interface_status(node, node_name, platform):
 
   alert_list = []
   try:
@@ -114,7 +114,7 @@ def check_interface_status(node, node_name):
   else:
     return alert_list, None
 
-def check_pool_status(node, node_name):
+def check_pool_status(node, node_name, platform):
 
   alert_list = []
   try:
@@ -142,7 +142,7 @@ def check_pool_status(node, node_name):
     return alert_list, None
 
 
-def check_load_average(node, node_name):
+def check_load_average(node, node_name, platform):
 
   alert_list = []
   try:
@@ -203,21 +203,21 @@ def main():
       
   
       # Check ipmi status
-      l, err = check_ipmi_status(node, node_name)
+      l, err = check_ipmi_status(node, node_name, platform)
       if err:
         print 'Error generating ipmi status : %s'%err
       if l:
         alert_list.extend(l)
   
       # Check interface status
-      l, err = check_interface_status(node, node_name)
+      l, err = check_interface_status(node, node_name, platform)
       if err:
         print 'Error generating interface status : %s'%err
       if l:
         alert_list.extend(l)
   
       # Check zfs pool status
-      l, err = check_pool_status(node, node_name)
+      l, err = check_pool_status(node, node_name, platform)
       if err:
         print 'Error generating pool status : %s'%err
       if l:
@@ -226,7 +226,7 @@ def main():
       # Check load average
       min = time.localtime().tm_min
       if min%15 == 0:
-        l, err = check_load_average(node, node_name)
+        l, err = check_load_average(node, node_name, platform)
         if err:
           print 'Error generating load average status : %s'%err
         if l:
