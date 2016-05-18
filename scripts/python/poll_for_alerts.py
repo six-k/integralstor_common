@@ -2,6 +2,7 @@
 import sys, time
 
 from integralstor_common import common, alerts, lock, command, zfs
+from integralstor_gridcell import volume_info
 #from integralstor_common.platforms import drive_signalling
 
 
@@ -162,6 +163,27 @@ def check_load_average(node, node_name, platform):
   else:
     return alert_list, None
 
+def check_quotas():
+
+  alert_list = []
+  try:
+    vil, err = volume_info.get_volume_info_all()
+    if err:
+      raise Exception(err)
+    if vil:
+      for v in vil:
+        if "quotas" in v:
+          if '/' in v['quotas']:
+            if v["quotas"]['/']["soft_limit_exceeded"].lower() == "yes":
+              alert_list.append("Exceeded %s of %s quota for volume %s. Current usage is %s"%(v['quotas']['/']['soft_limit'], v['quotas']['/']['limit'], v['name'], v['quotas']['/']['size']))
+            if v["quotas"]['/']["hard_limit_exceeded"].lower() == "yes":
+              alert_list.append("Exceeded complete %s quota for volume %s. All I/O will be disabled. "%(v['quotas']['/']['limit'], v['name']))
+  except Exception, e:
+    return None, 'Error checking volume quota status : %s'%str(e)
+  else:
+    return alert_list, None
+
+
 
 def main():
 
@@ -190,7 +212,6 @@ def main():
     alert_list = []
   
     for node_name, node in si.items():
-  
       if not node_up(node):
         alert_list.append("Node %s seems to be down."%node_name)
   
@@ -231,12 +252,17 @@ def main():
           print 'Error generating load average status : %s'%err
         if l:
           alert_list.extend(l)
-
-  
-    #print alert_list
-    print alert_list
     if alert_list:
       alerts.raise_alert(alert_list)
+
+    if platform == 'gridcell':
+      quota, err = check_quotas()
+      if err:
+        print "Error getting quota information : %s"%err
+      if quota:
+        print quota
+        print alerts.raise_quota_alert(quota)
+ 
     lock.release_lock('poll_for_alerts')
   except Exception, e:
     print "Error generating alerts : %s ! Exiting."%str(e)
