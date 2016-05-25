@@ -2,9 +2,13 @@
 import sys, time
 
 from integralstor_common import common, alerts, lock, command, zfs
-from integralstor_gridcell import volume_info
-#from integralstor_common.platforms import drive_signalling
-
+platform, err = common.get_platform()
+if err:
+  raise Exception(err)
+if platform == 'gridcell':
+  from integralstor_gridcell import system_info, volume_info
+else:
+  from integralstor_unicell import system_info
 
 import atexit
 atexit.register(lock.release_lock, 'poll_for_alerts')
@@ -195,13 +199,6 @@ def main():
     if not lck:
       raise Exception('Could not acquire lock. Exiting.')
 
-    platform, err = common.get_platform()
-    if err:
-      raise Exception(err)
-    if platform == 'gridcell':
-      from integralstor_gridcell import system_info
-    else:
-      from integralstor_unicell import system_info
 
     si, err = system_info.load_system_config()
     if err:
