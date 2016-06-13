@@ -177,11 +177,17 @@ def check_quotas():
     if vil:
       for v in vil:
         if "quotas" in v:
-          if '/' in v['quotas']:
-            if v["quotas"]['/']["soft_limit_exceeded"].lower() == "yes":
-              alert_list.append("Exceeded %s of %s quota for volume %s. Current usage is %s"%(v['quotas']['/']['soft_limit'], v['quotas']['/']['limit'], v['name'], v['quotas']['/']['size']))
-            if v["quotas"]['/']["hard_limit_exceeded"].lower() == "yes":
-              alert_list.append("Exceeded complete %s quota for volume %s. All I/O will be disabled. "%(v['quotas']['/']['limit'], v['name']))
+          for dir, quota in v['quotas'].items():
+            if v["quotas"][dir]["hard_limit_exceeded"].lower() == "yes":
+              if dir == '/':
+                alert_list.append("Exceeded hard quota limit of %s for volume %s. All writes will be disabled. "%(v['quotas'][dir]['limit'], v['name']))
+              else:
+                alert_list.append("Exceeded hard quota limit of %s for directory %s in volume %s. All writes will be disabled. "%(v['quotas'][dir]['limit'], dir, v['name']))
+            elif v["quotas"][dir]["soft_limit_exceeded"].lower() == "yes":
+              if dir == '/':
+                alert_list.append("Exceeded soft quota limit %s of %s quota for volume %s. Current usage is %s"%(v['quotas']['/']['soft_limit'], v['quotas']['/']['limit'], v['name'], v['quotas']['/']['size']))
+              else:
+                alert_list.append("Exceeded soft quota limit %s of %s quota for directory %s in volume %s. Current usage is %s"%(v['quotas'][dir]['soft_limit'], v['quotas'][dir]['limit'], dir, v['name'], v['quotas'][dir]['size']))
   except Exception, e:
     return None, 'Error checking volume quota status : %s'%str(e)
   else:
@@ -209,6 +215,7 @@ def main():
     alert_list = []
   
     for node_name, node in si.items():
+      print "node up for %s is %s"%(node_name, node_up(node))
       if not node_up(node):
         alert_list.append("Node %s seems to be down."%node_name)
   
@@ -249,6 +256,9 @@ def main():
           print 'Error generating load average status : %s'%err
         if l:
           alert_list.extend(l)
+    print "======================"
+    print alert_list
+    print "======================"
     if alert_list:
       alerts.raise_alert(alert_list)
 
@@ -258,7 +268,7 @@ def main():
         print "Error getting quota information : %s"%err
       if quota:
         print quota
-        print alerts.raise_quota_alert(quota)
+        print alerts.raise_alert(quota, 'IntegralStor GRIDCell quota limit exceeded')
  
     lock.release_lock('poll_for_alerts')
   except Exception, e:
