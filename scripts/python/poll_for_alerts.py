@@ -167,33 +167,6 @@ def check_load_average(node, node_name, platform):
   else:
     return alert_list, None
 
-def check_quotas():
-
-  alert_list = []
-  try:
-    vil, err = volume_info.get_volume_info_all()
-    if err:
-      raise Exception(err)
-    if vil:
-      for v in vil:
-        if "quotas" in v:
-          for dir, quota in v['quotas'].items():
-            if v["quotas"][dir]["hard_limit_exceeded"].lower() == "yes":
-              if dir == '/':
-                alert_list.append("Exceeded hard quota limit of %s for volume %s. All writes will be disabled. "%(v['quotas'][dir]['limit'], v['name']))
-              else:
-                alert_list.append("Exceeded hard quota limit of %s for directory %s in volume %s. All writes will be disabled. "%(v['quotas'][dir]['limit'], dir, v['name']))
-            elif v["quotas"][dir]["soft_limit_exceeded"].lower() == "yes":
-              if dir == '/':
-                alert_list.append("Exceeded soft quota limit %s of %s quota for volume %s. Current usage is %s"%(v['quotas']['/']['soft_limit'], v['quotas']['/']['limit'], v['name'], v['quotas']['/']['size']))
-              else:
-                alert_list.append("Exceeded soft quota limit %s of %s quota for directory %s in volume %s. Current usage is %s"%(v['quotas'][dir]['soft_limit'], v['quotas'][dir]['limit'], dir, v['name'], v['quotas'][dir]['size']))
-  except Exception, e:
-    return None, 'Error checking volume quota status : %s'%str(e)
-  else:
-    return alert_list, None
-
-
 
 def main():
 
@@ -262,14 +235,6 @@ def main():
     if alert_list:
       alerts.raise_alert(alert_list)
 
-    if platform == 'gridcell':
-      quota, err = check_quotas()
-      if err:
-        print "Error getting quota information : %s"%err
-      if quota:
-        print quota
-        print alerts.raise_alert(quota, 'IntegralStor GRIDCell quota limit exceeded')
- 
     lock.release_lock('poll_for_alerts')
   except Exception, e:
     print "Error generating alerts : %s ! Exiting."%str(e)
