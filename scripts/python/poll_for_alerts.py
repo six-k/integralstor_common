@@ -2,16 +2,10 @@
 import sys, time
 
 from integralstor_common import common, alerts, lock, command, zfs
-platform, err = common.get_platform()
-if err:
-  raise Exception(err)
-if platform == 'gridcell':
-  from integralstor_gridcell import system_info, volume_info
-else:
-  from integralstor_unicell import system_info
 
 import atexit
 atexit.register(lock.release_lock, 'poll_for_alerts')
+atexit.register(lock.release_lock, 'gluster_commands')
 
 def node_up(node):
     # Check node status
@@ -172,6 +166,11 @@ def main():
 
 
   try :
+    platform, err = common.get_platform()
+    if err:
+      raise Exception(err)
+
+
     lck, err = lock.get_lock('poll_for_alerts')
     if err:
       raise Exception(err)
@@ -179,7 +178,15 @@ def main():
       raise Exception('Could not acquire lock. Exiting.')
 
 
+    if platform == 'gridcell':
+      from integralstor_gridcell import system_info
+      gluster_lck, err = lock.get_lock('gluster_commands')
+    else:
+      from integralstor_unicell import system_info
+
     si, err = system_info.load_system_config()
+    if platform == 'gridcell':
+      lock.release_lock('gluster_commands')
     if err:
       raise Exception(err)
     if not si:
@@ -188,7 +195,7 @@ def main():
     alert_list = []
   
     for node_name, node in si.items():
-      print "node up for %s is %s"%(node_name, node_up(node))
+      #print "node up for %s is %s"%(node_name, node_up(node))
       if not node_up(node):
         alert_list.append("Node %s seems to be down."%node_name)
   
@@ -229,9 +236,9 @@ def main():
           print 'Error generating load average status : %s'%err
         if l:
           alert_list.extend(l)
-    print "======================"
-    print alert_list
-    print "======================"
+    #print "======================"
+    #print alert_list
+    #print "======================"
     if alert_list:
       alerts.raise_alert(alert_list)
 
