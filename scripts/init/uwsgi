@@ -1,0 +1,82 @@
+#!/bin/bash
+# chkconfig:   - 90 15
+#
+# WSGI init Script
+#
+# processname: uwsgi
+# description: Used to run python and wsgi web applciations.
+# author: Fractalio (info@fractalio.com)
+. /etc/rc.d/init.d/functions
+
+# Vars
+###########################
+PROG=/usr/bin/uwsgi
+DESC=uWSGI Service
+DAEMON_OPTS="--emperor /etc/uwsgi/vassals --uid root --gid root >/var/log/integralstor/integralstor_unicell/integral_view.log 2>&1 &" 
+lockfile=/var/lock/subsys/uwsgi
+
+start () {
+  echo -n "Starting $DESC: "
+  daemon $PROG $DAEMON_OPTS
+  retval=$?
+  echo
+  [ $retval -eq 0 ] && touch $lockfile
+  return $retval
+}
+
+
+stop () {
+  echo -n "Stopping $DESC: "
+  killproc $PROG
+  retval=$?
+  echo
+  [ $retval -eq 0 ] && rm -f $lockfile
+  return $retval
+}
+
+
+restart () {
+    stop
+    start
+}
+
+
+rh_status () {
+  status $PROG
+}
+
+
+rh_status_q() {
+  rh_status >/dev/null 2>&1
+}
+
+
+case "$1" in
+  start)
+    if ! pidof $PROG >/dev/null; then
+        rh_status_q && exit 0
+        $1
+    else
+        echo -e "\n$DESC is already started...\n"
+    fi
+ ;;
+  stop)
+    if pidof $PROG >/dev/null; then
+        rh_status_q || exit 0
+        $1
+    else
+        echo -e "\n$DESC can not be stoped because its not running...\n"
+    fi
+    ;;
+  restart)
+    $1
+    ;;
+  status)
+    rh_status
+    ;;
+  *)
+    echo "Usage: $0 {start|stop|restart|status}" >&2
+    exit 2
+    ;;
+esac
+exit 0
