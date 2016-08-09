@@ -103,12 +103,12 @@ def check_interface_status(node, node_name, platform):
         if 'lo' in if_name:
           continue
         #print if_name, interface
-        if 'slave_to' in interface or ('addresses' in interface and 'AF_INET' in interface['addresses']):
-          if "status" in interface and interface["status"] != 'up':
-            if platform == 'unicell':
-              alert_list.append("The network interface %s has problems."%(if_name))
-            else:
-              alert_list.append("GRIDCell : %s. The network interface %s has problems."%(node_name, if_name))
+        #if 'slave_to' in interface or ('addresses' in interface and 'AF_INET' in interface['addresses']):
+        if "status" in interface and interface["status"] != 'up':
+          if platform == 'unicell':
+            alert_list.append("The network interface %s has problems."%(if_name))
+          else:
+            alert_list.append("GRIDCell : %s. The network interface %s has problems."%(node_name, if_name))
   except Exception, e:
     return None, 'Error checking interface status : %s'%str(e)
   else:
