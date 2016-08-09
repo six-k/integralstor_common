@@ -7,6 +7,64 @@ import atexit
 atexit.register(lock.release_lock, 'poll_for_alerts')
 atexit.register(lock.release_lock, 'gluster_commands')
 
+def main():
+  try :
+    platform, err = common.get_platform()
+    if err:
+      raise Exception(err)
+
+
+    lck, err = lock.get_lock('poll_for_alerts')
+    if err:
+      raise Exception(err)
+    if not lck:
+      raise Exception('Could not acquire lock. Exiting.')
+
+
+    if platform == 'gridcell':
+      from integralstor_gridcell import system_info
+      gluster_lck, err = lock.get_lock('gluster_commands')
+    else:
+      from integralstor_unicell import system_info
+
+    si, err = system_info.load_system_config()
+    if platform == 'gridcell':
+      lock.release_lock('gluster_commands')
+    if err:
+      raise Exception(err)
+    if not si:
+      raise Exception('Could not load system information')
+
+    alert_list = []
+  
+    for node_name, node in si.items():
+      if 'errors' in node and node['errors']:
+        if platform == 'gridcell':
+          msg = 'GRIDCell : %s. '%node_name
+        else:
+          msg = ''
+        msg += '. '.join(node['errors'])
+      
+        alert_list.append(msg)
+
+    #print "======================"
+    #print alert_list
+    #print "======================"
+    if alert_list:
+      alerts.raise_alert(alert_list)
+
+    lock.release_lock('poll_for_alerts')
+  except Exception, e:
+    print "Error generating alerts : %s ! Exiting."%str(e)
+    sys.exit(-1)
+  else:
+    sys.exit(0)
+
+if __name__ == "__main__":
+  main()
+
+
+'''
 def node_up(node):
     # Check node status
     if "node_status" in node:
@@ -14,7 +72,6 @@ def node_up(node):
         if node["node_status"] < 0:
           return False 
     return True
-
 def check_disk_status(node, node_name, platform):
 
   alert_list = []
@@ -40,33 +97,6 @@ def check_disk_status(node, node_name, platform):
           disk_signalling_list.append({'scsi_info': disk['scsi_info'], 'action':'OFF'})
     #drive_signalling.signal_drives(disk_signalling_list)
 
-    '''
-    if err_pos:
-      i = 1
-      while i < 5:
-        if i in err_pos:
-          s += "Err"
-        else:
-          s += "Ok"
-        if i < 4:
-          s += ' '
-        i += 1
-      if platform == 'unicell':
-        s1 =  '%s/lcdmsg.py "Disk error slots" "%s"'%(common_python_scripts_path, s)
-        (ret, rc), err = command.execute_with_rc(s1)
-        if err:
-          raise Exception(err)
-      else:
-        r1 = client.cmd(node_name, 'cmd.run', [s1])
-    else:
-      if platform == 'unicell':
-        s1 =  '%s/lcdmsg.py "Integral-stor" "Unicell"'%common_python_scripts_path
-        (ret, rc), err = command.execute_with_rc(s1)
-        if err:
-          raise Exception(err)
-      else:
-        r1 = client.cmd(node_name, 'cmd.run', ['%s/nodetype.sh'%shell_scripts_path])
-    '''
   except Exception, e:
     return None, 'Error checking disk status : %s'%str(e)
   else:
@@ -97,6 +127,7 @@ def check_interface_status(node, node_name, platform):
 
   alert_list = []
   try:
+    #print node.keys()
     if "interfaces" in node:
       interfaces = node["interfaces"]
       for if_name, interface in interfaces.items():
@@ -162,95 +193,4 @@ def check_load_average(node, node_name, platform):
   else:
     return alert_list, None
 
-
-def main():
-
-
-  try :
-    platform, err = common.get_platform()
-    if err:
-      raise Exception(err)
-
-
-    lck, err = lock.get_lock('poll_for_alerts')
-    if err:
-      raise Exception(err)
-    if not lck:
-      raise Exception('Could not acquire lock. Exiting.')
-
-
-    if platform == 'gridcell':
-      from integralstor_gridcell import system_info
-      gluster_lck, err = lock.get_lock('gluster_commands')
-    else:
-      from integralstor_unicell import system_info
-
-    si, err = system_info.load_system_config()
-    if platform == 'gridcell':
-      lock.release_lock('gluster_commands')
-    if err:
-      raise Exception(err)
-    if not si:
-      raise Exception('Could not load system information')
-
-    alert_list = []
-  
-    for node_name, node in si.items():
-      #print "node up for %s is %s"%(node_name, node_up(node))
-      if not node_up(node):
-        alert_list.append("Node %s seems to be down."%node_name)
-  
-      # Check disks status
-      l, err = check_disk_status(node, node_name, platform)
-      if err:
-        print 'Error generating disk status : %s'%err
-      if l:
-        alert_list.extend(l)
-      
-  
-      # Check ipmi status
-      l, err = check_ipmi_status(node, node_name, platform)
-      if err:
-        print 'Error generating ipmi status : %s'%err
-      if l:
-        alert_list.extend(l)
-  
-      # Check interface status
-      l, err = check_interface_status(node, node_name, platform)
-      if err:
-        print 'Error generating interface status : %s'%err
-      if l:
-        alert_list.extend(l)
-  
-      # Check zfs pool status
-      l, err = check_pool_status(node, node_name, platform)
-      if err:
-        print 'Error generating pool status : %s'%err
-      if l:
-        alert_list.extend(l)
-  
-      # Check load average
-      min = time.localtime().tm_min
-      if min%15 == 0:
-        l, err = check_load_average(node, node_name, platform)
-        if err:
-          print 'Error generating load average status : %s'%err
-        if l:
-          alert_list.extend(l)
-    #print "======================"
-    #print alert_list
-    #print "======================"
-    if alert_list:
-      alerts.raise_alert(alert_list)
-
-    lock.release_lock('poll_for_alerts')
-  except Exception, e:
-    print "Error generating alerts : %s ! Exiting."%str(e)
-    sys.exit(-1)
-  else:
-    sys.exit(0)
-
-if __name__ == "__main__":
-  main()
-
-
+'''
