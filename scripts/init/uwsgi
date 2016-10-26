@@ -12,7 +12,7 @@
 ###########################
 PROG=/usr/bin/uwsgi
 DESC="uWSGI Service"
-DAEMON_OPTS="--emperor /etc/uwsgi/vassals --uid root --gid root >/var/log/integralstor/integralstor_unicell/integral_view.log 2>&1 &" 
+DAEMON_OPTS="--emperor /etc/uwsgi/vassals --uid root --gid root >/var/log/integralstor/integral_view.log 2>&1 &" 
 lockfile=/var/lock/subsys/uwsgi
 
 start () {
