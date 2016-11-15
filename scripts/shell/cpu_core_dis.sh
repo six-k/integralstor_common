@@ -17,7 +17,7 @@ echo "Total CPU(s):" $TOTAL_CPU
     done; } &> /dev/null
 #Disabling the cpu cores with the user input
 
-if [ "$1" -gt "1" ]; then
+if [ "$1" -gt "1" -a "$1" -lt "$max" ]; then
 	max=$(lscpu  | grep CPU\(s\) | head -n 1 | cut -d':' -f2 | rev)
 	dis="$(( $max -1))"
     for CPU in /sys/devices/system/cpu/cpu[$1-$dis]*; do
