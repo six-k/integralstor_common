@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
-import json, os, datetime, shutil, sys
-from integralstor_common import lock, common, manifest_status
+import json, os, datetime, shutil, sys, logging
+from integralstor_common import lock, common, manifest_status, logger
 
 def gen_manifest(path):
   try:
@@ -40,7 +40,11 @@ atexit.register(lock.release_lock, 'generate_manifest')
 
 def main():
 
+  lg = None
   try :
+    lg, err = logger.get_script_logger('Generate manifest', '/var/log/integralstor/scripts.log', level = logging.DEBUG)
+    logger.log_or_print('Generate manifest initiated.', lg, level='info')
+
     num_args = len(sys.argv)
     if num_args > 1:
       path = sys.argv[1]
@@ -50,15 +54,17 @@ def main():
         raise Exception(err)
       if not path:
         path = '/tmp'
-    print "Generating the manifest in %s"%path
+    logger.log_or_print("Generating the manifest in %s"%path, lg, level='info')
     rc, err = gen_manifest(path)
     if err:
       raise Exception(err)
-    print rc
+    #print rc
   except Exception, e:
-    print "Error generating manifest file : %s"%e
+    str =  "Error generating manifest file : %s"%e
+    logger.log_or_print(str, lg, level='critical')
     return -1
   else:
+    logger.log_or_print('Generate manifest completed successfully', lg, level='info')
     return 0
 
 if __name__ == "__main__":

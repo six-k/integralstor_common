@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
-from integralstor_common import lock, common, manifest_status
-import json, os, shutil, datetime, sys, re
+from integralstor_common import lock, common, manifest_status, logger
+import json, os, shutil, datetime, sys, re, logging
 import pprint
 
   
@@ -38,26 +38,45 @@ atexit.register(lock.release_lock, 'generate_status')
 
 def main():
 
-    try :
-      num_args = len(sys.argv)
-      if num_args > 1:
-        path = sys.argv[1]
-      else:
-        path, err = common.get_system_status_path()
-        if err:
-          raise Exception(err)
-        if not path:
-          path = '/tmp'
-      print "Generating the status in %s"%path
-      rc, err = gen_status(path)
+  lg = None
+  try :
+    lg, err = logger.get_script_logger('Generate status', '/var/log/integralstor/scripts.log', level = logging.DEBUG)
+
+    logger.log_or_print('Generate status initiated.', lg, level='info')
+
+    platform, err = common.get_platform()
+    if err:
+      raise Exception(err)
+
+    if platform == 'gridcell':
+      from integralstor_gridcell import grid_ops
+      active, err = grid_ops.is_active_admin_gridcell()
       if err:
         raise Exception(err)
-      print rc
-    except Exception, e:
-      print "Error generating status file : %s"%e
-      return -1
+      if not active:
+        logger.log_or_print('Not active admin GRIDCell so exiting.', lg, level='info')
+        sys.exit(0)
+    num_args = len(sys.argv)
+    if num_args > 1:
+      path = sys.argv[1]
     else:
-      return 0
+      path, err = common.get_system_status_path()
+      if err:
+        raise Exception(err)
+      if not path:
+        path = '/tmp'
+    logger.log_or_print("Generating the status in %s"%path, lg, level='info')
+    rc, err = gen_status(path)
+    if err:
+      raise Exception(err)
+    #print rc
+  except Exception, e:
+    str = "Error generating status file : %s"%e
+    logger.log_or_print(str, lg, level='critical')
+    sys.exit(-1)
+  else:
+    logger.log_or_print('Generate status completed successfully.', lg, level='info')
+    sys.exit(0)
 
 
 if __name__ == "__main__":
