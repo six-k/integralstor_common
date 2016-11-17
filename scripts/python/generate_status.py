@@ -48,7 +48,22 @@ def main():
     if err:
       raise Exception(err)
 
-    if platform == 'gridcell':
+    default_path = False
+
+    num_args = len(sys.argv)
+
+    if num_args > 1:
+      path = sys.argv[1]
+    else:
+      default_path = True
+      path, err = common.get_system_status_path()
+      if err:
+        raise Exception(err)
+      if not path:
+        path = '/tmp'
+
+    if platform == 'gridcell' and default_path:
+      #This means that I must've been called from a cron script so need to check if I really need to execute..
       from integralstor_gridcell import grid_ops
       active, err = grid_ops.is_active_admin_gridcell()
       if err:
@@ -56,15 +71,7 @@ def main():
       if not active:
         logger.log_or_print('Not active admin GRIDCell so exiting.', lg, level='info')
         sys.exit(0)
-    num_args = len(sys.argv)
-    if num_args > 1:
-      path = sys.argv[1]
-    else:
-      path, err = common.get_system_status_path()
-      if err:
-        raise Exception(err)
-      if not path:
-        path = '/tmp'
+
     logger.log_or_print("Generating the status in %s"%path, lg, level='info')
     rc, err = gen_status(path)
     if err:
