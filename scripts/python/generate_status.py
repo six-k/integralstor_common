@@ -5,7 +5,7 @@ import json, os, shutil, datetime, sys, re, logging
 import pprint
 
   
-def gen_status(path):
+def gen_status(path, lg = None):
   try :
     lck, err = lock.get_lock('generate_status')
     if err:
@@ -25,8 +25,10 @@ def gen_status(path):
     with open(fulltmppath, 'w') as fd:
       json.dump(ret, fd, indent=2)
     #Now move the tmp to the actual manifest file name
+    #print 'fullpath is ', fullpath
     shutil.move(fulltmppath, fullpath)
   except Exception, e:
+    logger.log_or_print('Error generating status : '%e, lg, level='critical')
     lock.release_lock('generate_status')
     return -1,  'Error generating status : %s'%str(e)
   else:
@@ -61,6 +63,7 @@ def main():
         raise Exception(err)
       if not path:
         path = '/tmp'
+    #print platform, path
 
     if platform == 'gridcell' and default_path:
       #This means that I must've been called from a cron script so need to check if I really need to execute..
@@ -73,7 +76,7 @@ def main():
         sys.exit(0)
 
     logger.log_or_print("Generating the status in %s"%path, lg, level='info')
-    rc, err = gen_status(path)
+    rc, err = gen_status(path, lg)
     if err:
       raise Exception(err)
     #print rc
