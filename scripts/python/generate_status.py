@@ -28,9 +28,9 @@ def gen_status(path, lg = None):
     #print 'fullpath is ', fullpath
     shutil.move(fulltmppath, fullpath)
   except Exception, e:
-    logger.log_or_print('Error generating status : '%e, lg, level='critical')
+    logger.log_or_print('Error generating status : %s'%e, lg, level='critical')
     lock.release_lock('generate_status')
-    return -1,  'Error generating status : %s'%str(e)
+    return -1,  'Error generating status : %s'%e
   else:
     lock.release_lock('generate_status')
     return 0, None

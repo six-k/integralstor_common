@@ -47,6 +47,20 @@ def main():
       
         alert_list.append(msg)
 
+    hw_platform, err = common.get_hardware_platform()
+    if hw_platform:
+      if hw_platform == 'dell':
+        from integralstor_common.platforms import dell
+        alerts_dict, err = dell.get_alert_logs()
+        if alerts_dict:
+          current_time = int(time.time())
+          for time_stamp, alerts_list in alerts_dict.items():
+            for alert_dict in alerts_list:
+              if alert_dict['Severity'] == 'Critical':
+                if (current_time - time_stamp) < (60*60):
+                  alert_list.append(alert_dict['description'])
+                  #print time_stamp, alert_dict
+
     #print "======================"
     #print alert_list
     #print "======================"
