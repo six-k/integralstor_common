@@ -6,22 +6,22 @@ def main():
 
   lg = None
   try :
-    lg, err = logger.get_script_logger('Scheduler', '/var/log/integralstor/scripts.log', level = logging.DEBUG)
+    lg, err = logger.get_script_logger('Task processor', '/var/log/integralstor/scripts.log', level = logging.DEBUG)
 
-    logger.log_or_print('Scheduler execution initiated.', lg, level='info')
+    logger.log_or_print('Task processor execution initiated.', lg, level='info')
 
     db_path,err = common.get_db_path()
     if err:
       raise Exception(err)
-    ret, err = scheduler_utils.execute_scheduler(db_path)
+    ret, err = scheduler_utils.process_tasks()
     if err:
       raise Exception(err)
   except Exception, e:
-    str = 'Error running the scheduler : %s'%e
+    str = 'Error running the task processor : %s'%e
     logger.log_or_print(str, lg, level='critical')
     return -1
   else:
-    str = 'Scheduler execution complete.'
+    str = 'Task processor execution complete.'
     logger.log_or_print(str, lg, level='info')
     return 0
 
