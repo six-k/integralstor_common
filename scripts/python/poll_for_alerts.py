@@ -1,5 +1,6 @@
 #!/usr/bin/python
-import sys, time
+import sys
+import time
 
 from integralstor_common import common, alerts, lock, command, zfs
 
@@ -7,19 +8,18 @@ import atexit
 atexit.register(lock.release_lock, 'poll_for_alerts')
 atexit.register(lock.release_lock, 'gluster_commands')
 
+
 def main():
-    try :
+    try:
         platform, err = common.get_platform()
         if err:
             raise Exception(err)
-
 
         lck, err = lock.get_lock('poll_for_alerts')
         if err:
             raise Exception(err)
         if not lck:
             raise Exception('Could not acquire lock. Exiting.')
-
 
         if platform == 'gridcell':
             from integralstor_gridcell import system_info
@@ -40,7 +40,7 @@ def main():
         for node_name, node in si.items():
             if 'errors' in node and node['errors']:
                 if platform == 'gridcell':
-                    msg = 'GRIDCell : %s. '%node_name
+                    msg = 'GRIDCell : %s. ' % node_name
                 else:
                     msg = ''
                 msg += '. '.join(node['errors'])
@@ -57,22 +57,24 @@ def main():
                     for time_stamp, alerts_list in alerts_dict.items():
                         for alert_dict in alerts_list:
                             if alert_dict['Severity'] == 'Critical':
-                                if (current_time - time_stamp) < (60*60):
-                                    alert_list.append(alert_dict['description'])
-                                    #print time_stamp, alert_dict
+                                if (current_time - time_stamp) < (60 * 60):
+                                    alert_list.append(
+                                        alert_dict['description'])
+                                    # print time_stamp, alert_dict
 
-        #print "======================"
-        #print alert_list
-        #print "======================"
+        # print "======================"
+        # print alert_list
+        # print "======================"
         if alert_list:
             alerts.raise_alert(alert_list)
 
         lock.release_lock('poll_for_alerts')
     except Exception, e:
-        print "Error generating alerts : %s ! Exiting."%str(e)
+        print "Error generating alerts : %s ! Exiting." % str(e)
         sys.exit(-1)
     else:
         sys.exit(0)
+
 
 if __name__ == "__main__":
     main()

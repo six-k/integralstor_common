@@ -1,8 +1,10 @@
 #!/usr/bin/python
 
-import sys, subprocess
+import sys
+import subprocess
 
 from integralstor_common import common
+
 
 def process_call(command):
     try:
@@ -10,10 +12,11 @@ def process_call(command):
         output = ""
         while True:
             out = process.stdout.readline()
-            if out == '' and process.poll() != None: break
+            if out == '' and process.poll() != None:
+                break
             output += out
     except Exception, e:
-        return None, 'Error executing command : %s'%str(e)
+        return None, 'Error executing command : %s' % str(e)
     else:
         return (process.returncode, output), None
 
@@ -24,7 +27,7 @@ if __name__ == "__main__":
         bin_dir, err = common.get_bin_dir()
         if err:
             raise Exception(err)
-        fpctl = '%s/fpctl'%bin_dir
+        fpctl = '%s/fpctl' % bin_dir
         lcd.append(fpctl)
         lcd.append("clear")
         (ret, output), err = process_call(lcd)
@@ -79,7 +82,7 @@ if __name__ == "__main__":
                 raise Exception(err)
 
     except Exception, e:
-        print 'Error displaying on LCD : %s'%str(e)
+        print 'Error displaying on LCD : %s' % str(e)
         sys.exit(-1)
     else:
         sys.exit(0)
