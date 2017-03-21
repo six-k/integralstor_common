@@ -1,5 +1,6 @@
 #!/usr/bin/python
-import sys, time
+import sys
+import time
 
 from integralstor_common import common, alerts, lock, command, zfs
 
@@ -7,75 +8,76 @@ import atexit
 atexit.register(lock.release_lock, 'poll_for_alerts')
 atexit.register(lock.release_lock, 'gluster_commands')
 
+
 def main():
-  try :
-    platform, err = common.get_platform()
-    if err:
-      raise Exception(err)
+    try:
+        platform, err = common.get_platform()
+        if err:
+            raise Exception(err)
 
+        lck, err = lock.get_lock('poll_for_alerts')
+        if err:
+            raise Exception(err)
+        if not lck:
+            raise Exception('Could not acquire lock. Exiting.')
 
-    lck, err = lock.get_lock('poll_for_alerts')
-    if err:
-      raise Exception(err)
-    if not lck:
-      raise Exception('Could not acquire lock. Exiting.')
-
-
-    if platform == 'gridcell':
-      from integralstor_gridcell import system_info
-      gluster_lck, err = lock.get_lock('gluster_commands')
-    else:
-      from integralstor_unicell import system_info
-
-    si, err = system_info.load_system_config()
-    if platform == 'gridcell':
-      lock.release_lock('gluster_commands')
-    if err:
-      raise Exception(err)
-    if not si:
-      raise Exception('Could not load system information')
-
-    alert_list = []
-  
-    for node_name, node in si.items():
-      if 'errors' in node and node['errors']:
         if platform == 'gridcell':
-          msg = 'GRIDCell : %s. '%node_name
+            from integralstor_gridcell import system_info
+            gluster_lck, err = lock.get_lock('gluster_commands')
         else:
-          msg = ''
-        msg += '. '.join(node['errors'])
-      
-        alert_list.append(msg)
+            from integralstor_unicell import system_info
 
-    hw_platform, err = common.get_hardware_platform()
-    if hw_platform:
-      if hw_platform == 'dell':
-        from integralstor_common.platforms import dell
-        alerts_dict, err = dell.get_alert_logs()
-        if alerts_dict:
-          current_time = int(time.time())
-          for time_stamp, alerts_list in alerts_dict.items():
-            for alert_dict in alerts_list:
-              if alert_dict['Severity'] == 'Critical':
-                if (current_time - time_stamp) < (60*60):
-                  alert_list.append(alert_dict['description'])
-                  #print time_stamp, alert_dict
+        si, err = system_info.load_system_config()
+        if platform == 'gridcell':
+            lock.release_lock('gluster_commands')
+        if err:
+            raise Exception(err)
+        if not si:
+            raise Exception('Could not load system information')
 
-    #print "======================"
-    #print alert_list
-    #print "======================"
-    if alert_list:
-      alerts.raise_alert(alert_list)
+        alert_list = []
 
-    lock.release_lock('poll_for_alerts')
-  except Exception, e:
-    print "Error generating alerts : %s ! Exiting."%str(e)
-    sys.exit(-1)
-  else:
-    sys.exit(0)
+        for node_name, node in si.items():
+            if 'errors' in node and node['errors']:
+                if platform == 'gridcell':
+                    msg = 'GRIDCell : %s. ' % node_name
+                else:
+                    msg = ''
+                msg += '. '.join(node['errors'])
+
+                alert_list.append(msg)
+
+        hw_platform, err = common.get_hardware_platform()
+        if hw_platform:
+            if hw_platform == 'dell':
+                from integralstor_common.platforms import dell
+                alerts_dict, err = dell.get_alert_logs()
+                if alerts_dict:
+                    current_time = int(time.time())
+                    for time_stamp, alerts_list in alerts_dict.items():
+                        for alert_dict in alerts_list:
+                            if alert_dict['Severity'] == 'Critical':
+                                if (current_time - time_stamp) < (60 * 60):
+                                    alert_list.append(
+                                        alert_dict['description'])
+                                    # print time_stamp, alert_dict
+
+        # print "======================"
+        # print alert_list
+        # print "======================"
+        if alert_list:
+            alerts.raise_alert(alert_list)
+
+        lock.release_lock('poll_for_alerts')
+    except Exception, e:
+        print "Error generating alerts : %s ! Exiting." % str(e)
+        sys.exit(-1)
+    else:
+        sys.exit(0)
+
 
 if __name__ == "__main__":
-  main()
+    main()
 
 
 '''
@@ -208,3 +210,5 @@ def check_load_average(node, node_name, platform):
     return alert_list, None
 
 '''
+
+# vim: tabstop=8 softtabstop=0 expandtab ai shiftwidth=4 smarttab
