@@ -3,7 +3,7 @@
 import sys
 import subprocess
 
-from integralstor_common import common
+from integralstor_utils import common
 
 
 def process_call(command):

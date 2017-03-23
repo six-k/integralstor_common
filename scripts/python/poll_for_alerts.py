@@ -2,7 +2,7 @@
 import sys
 import time
 
-from integralstor_common import common, alerts, lock, command, zfs
+from integralstor_utils import common, alerts, lock, command, zfs
 
 import atexit
 atexit.register(lock.release_lock, 'poll_for_alerts')
@@ -50,7 +50,7 @@ def main():
         hw_platform, err = common.get_hardware_platform()
         if hw_platform:
             if hw_platform == 'dell':
-                from integralstor_common.platforms import dell
+                from integralstor_utils.platforms import dell
                 alerts_dict, err = dell.get_alert_logs()
                 if alerts_dict:
                     current_time = int(time.time())

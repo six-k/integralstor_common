@@ -1,4 +1,4 @@
-from integralstor_common import scheduler_utils, common, logger
+from integralstor_utils import scheduler_utils, common, logger
 import logging
 
 
