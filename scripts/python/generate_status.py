@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-from integralstor_common import lock, common, manifest_status, logger
+from integralstor_utils import lock, common, manifest_status, logger
 import json
 import os
 import shutil

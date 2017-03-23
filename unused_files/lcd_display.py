@@ -1,5 +1,5 @@
 
-from integralstor_common import command, common
+from integralstor_utils import command, common
 import subprocess
 
 
