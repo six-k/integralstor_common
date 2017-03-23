@@ -25,7 +25,7 @@ def main():
             from integralstor_gridcell import system_info
             gluster_lck, err = lock.get_lock('gluster_commands')
         else:
-            from integralstor_unicell import system_info
+            from integralstor import system_info
 
         si, err = system_info.load_system_config()
         if platform == 'gridcell':
@@ -105,7 +105,7 @@ def check_disk_status(node, node_name, platform):
       for sn, disk in disks.items():
         if "status" in disk and disk['status'] != None and disk["status"] not in ['PASSED', 'OK']:
           disk_signalling_list.append({'scsi_info': disk['scsi_info'], 'action':'ON'})
-          if platform == 'unicell':
+          if platform == 'integralstor':
             alert_list.append("Disk with serial number %s has problems."%(sn))
           else:
             alert_list.append("GRIDCell : %s. Disk with serial number %s has problems."%(node_name, sn))
@@ -127,7 +127,7 @@ def check_ipmi_status(node, node_name, platform):
       status_list = node["ipmi_status"]
       for status_item in status_list:
         if status_item["status"] not in ['ok', 'nr']:
-          if platform == 'unicell':
+          if platform == 'integralstor':
             m = "The %s of the %s is reporting errors" %(status_item["parameter_name"], status_item["component_name"])
           else:
             m = "GRIDCell : %s. The %s of the %s is reporting errors" %(node_name, status_item["parameter_name"], status_item["component_name"])
@@ -152,7 +152,7 @@ def check_interface_status(node, node_name, platform):
         #print if_name, interface
         #if 'slave_to' in interface or ('addresses' in interface and 'AF_INET' in interface['addresses']):
         if "status" in interface and interface["status"] != 'up':
-          if platform == 'unicell':
+          if platform == 'integralstor':
             alert_list.append("The network interface %s has problems."%(if_name))
           else:
             alert_list.append("GRIDCell : %s. The network interface %s has problems."%(node_name, if_name))
@@ -176,7 +176,7 @@ def check_pool_status(node, node_name, platform):
           for component in component_status_list:
             if 'status' in component and 'state' in component['status'] and component['status']['state'] != 'ONLINE':
               if not msg:
-                if platform == 'unicell':
+                if platform == 'integralstor':
                   msg = "The ZFS pool '%s' has the following issue(s) : "%pool_name
                 else:
                   msg = "GRIDCell : %s. The ZFS pool '%s' has the following issue(s) : "%(node_name, pool_name)
@@ -195,12 +195,12 @@ def check_load_average(node, node_name, platform):
   try:
     if "load_avg" in node:
       if node["load_avg"]["5_min"] > node["load_avg"]["cpu_cores"]:
-        if platform == 'unicell':
+        if platform == 'integralstor':
           alert_list.append("The 5 minute load average has been high with a value of %.2f."%(node["load_avg"]["5_min"]))
         else:
           alert_list.append("GRIDCell : %s. The 5 minute load average has been high with a value of %.2f."%(node_name, node["load_avg"]["5_min"]))
       if node["load_avg"]["15_min"] > node["load_avg"]["cpu_cores"]:
-        if platform == 'unicell':
+        if platform == 'integralstor':
           alert_list.append("The 15 minute load average on has been high with a value of %.2f."%(node["load_avg"]["15_min"]))
         else:
           alert_list.append("GRIDCell : %s. The 15 minute load average on has been high with a value of %.2f."%(node_name, node["load_avg"]["15_min"]))
