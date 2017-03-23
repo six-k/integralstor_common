@@ -6,7 +6,7 @@ import datetime
 import shutil
 import sys
 import logging
-from integralstor_utils import lock, common, manifest_status, logger
+from integralstor_utils import lock, config, manifest_status, logger
 
 
 def gen_manifest(path):
@@ -59,7 +59,7 @@ def main():
         if num_args > 1:
             path = sys.argv[1]
         else:
-            path, err = common.get_system_status_path()
+            path, err = config.get_system_status_path()
             if err:
                 raise Exception(err)
             if not path:

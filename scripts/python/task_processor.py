@@ -1,4 +1,4 @@
-from integralstor_utils import scheduler_utils, common, logger
+from integralstor_utils import scheduler_utils, config, logger
 import logging
 
 
@@ -12,7 +12,7 @@ def main():
         logger.log_or_print(
             'Task processor execution initiated.', lg, level='info')
 
-        db_path, err = common.get_db_path()
+        db_path, err = config.get_db_path()
         if err:
             raise Exception(err)
         ret, err = scheduler_utils.process_tasks()

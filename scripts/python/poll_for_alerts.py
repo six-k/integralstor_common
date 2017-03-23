@@ -2,7 +2,7 @@
 import sys
 import time
 
-from integralstor_utils import common, alerts, lock, command, zfs
+from integralstor_utils import config, alerts, lock, command, zfs
 
 import atexit
 atexit.register(lock.release_lock, 'poll_for_alerts')
@@ -11,7 +11,7 @@ atexit.register(lock.release_lock, 'gluster_commands')
 
 def main():
     try:
-        platform, err = common.get_platform()
+        platform, err = config.get_platform()
         if err:
             raise Exception(err)
 
@@ -47,7 +47,7 @@ def main():
 
                 alert_list.append(msg)
 
-        hw_platform, err = common.get_hardware_platform()
+        hw_platform, err = config.get_hardware_platform()
         if hw_platform:
             if hw_platform == 'dell':
                 from integralstor_utils.platforms import dell
@@ -92,10 +92,10 @@ def check_disk_status(node, node_name, platform):
 
   alert_list = []
   try: 
-    common_python_scripts_path, err = common.get_common_python_scripts_path()
+    common_python_scripts_path, err = config.get_common_python_scripts_path()
     if err:
       raise Exception(err)
-    shell_scripts_path, err = common.get_shell_scripts_path()
+    shell_scripts_path, err = config.get_shell_scripts_path()
     if err:
       raise Exception(err)
     disk_signalling_list = []

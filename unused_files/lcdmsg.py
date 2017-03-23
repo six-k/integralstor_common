@@ -3,7 +3,7 @@
 import sys
 import subprocess
 
-from integralstor_utils import common
+from integralstor_utils import config
 
 
 def process_call(command):
@@ -24,7 +24,7 @@ def process_call(command):
 if __name__ == "__main__":
     try:
         lcd = []
-        bin_dir, err = common.get_bin_dir()
+        bin_dir, err = config.get_bin_dir()
         if err:
             raise Exception(err)
         fpctl = '%s/fpctl' % bin_dir

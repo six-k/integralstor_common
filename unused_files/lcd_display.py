@@ -1,11 +1,11 @@
 
-from integralstor_utils import command, common
+from integralstor_utils import command, config
 import subprocess
 
 
 def display(line1, line2=None):
     try:
-        bin_path, err = common.get_bin_dir()
+        bin_path, err = config.get_bin_dir()
         if err:
             raise Exception(err)
         clear()
@@ -31,7 +31,7 @@ def display(line1, line2=None):
 
 def clear():
     try:
-        bin_path, err = common.get_bin_dir()
+        bin_path, err = config.get_bin_dir()
         if err:
             raise Exception(err)
         subprocess.Popen(["%s/fpctl" % (bin_path), "clear"])
