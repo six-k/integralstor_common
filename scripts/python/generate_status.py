@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-from integralstor_utils import lock, common, manifest_status, logger
+from integralstor_utils import lock, config, manifest_status, logger
 import json
 import os
 import shutil
@@ -56,7 +56,7 @@ def main():
 
         logger.log_or_print('Generate status initiated.', lg, level='info')
 
-        platform, err = common.get_platform()
+        platform, err = config.get_platform()
         if err:
             raise Exception(err)
 
@@ -68,7 +68,7 @@ def main():
             path = sys.argv[1]
         else:
             default_path = True
-            path, err = common.get_system_status_path()
+            path, err = config.get_system_status_path()
             if err:
                 raise Exception(err)
             if not path:
